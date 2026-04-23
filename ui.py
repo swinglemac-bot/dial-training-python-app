@@ -620,6 +620,35 @@ def render_admin() -> None:
             st.success(f"Updated {selected_email}.")
 
     st.divider()
+    st.subheader("Current Members")
+    role_filter = st.selectbox("Filter by role", ["all", "member", "admin"], index=0)
+    status_filter = st.selectbox("Filter by status", ["all", "active", "paused", "locked"], index=0)
+    filtered_members = []
+    for member in st.session_state["members"]:
+        role_ok = role_filter == "all" or member["role"] == role_filter
+        status_ok = status_filter == "all" or member["status"] == status_filter
+        if role_ok and status_ok:
+            filtered_members.append(member)
+
+    if filtered_members:
+        st.dataframe(
+            [
+                {
+                    "name": member["name"],
+                    "email": member["email"],
+                    "role": member["role"],
+                    "plan": member["plan"],
+                    "status": member["status"],
+                }
+                for member in filtered_members
+            ],
+            use_container_width=True,
+            hide_index=True,
+        )
+    else:
+        st.info("No members match the current filters.")
+
+    st.divider()
     st.subheader("Admin Snapshot")
     st.code(
         json.dumps(
