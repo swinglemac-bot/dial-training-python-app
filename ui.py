@@ -135,6 +135,45 @@ st.markdown(
   letter-spacing: .08em;
   margin-bottom: 4px;
 }}
+[data-testid="stTextInputRootElement"] input,
+[data-testid="stTextArea"] textarea,
+[data-testid="stNumberInput"] input {{
+  background: #111827 !important;
+  color: #E5E7EB !important;
+  border: 1px solid #334155 !important;
+  border-radius: 10px !important;
+}}
+[data-testid="stTextInputRootElement"] input::placeholder,
+[data-testid="stTextArea"] textarea::placeholder {{
+  color: #94A3B8 !important;
+}}
+[data-baseweb="select"] > div {{
+  background: #111827 !important;
+  color: #E5E7EB !important;
+  border: 1px solid #334155 !important;
+  border-radius: 10px !important;
+}}
+[data-baseweb="select"] svg {{
+  fill: #9CB4FF !important;
+}}
+.stButton > button,
+.stFormSubmitButton > button {{
+  background: linear-gradient(160deg, #151E30, #121826) !important;
+  color: #E5E7EB !important;
+  border: 1px solid #334155 !important;
+  border-radius: 10px !important;
+}}
+.stButton > button:hover,
+.stFormSubmitButton > button:hover {{
+  border-color: #9CB4FF !important;
+  color: #FFFFFF !important;
+}}
+.stButton > button:disabled,
+.stFormSubmitButton > button:disabled {{
+  background: #111827 !important;
+  color: #64748B !important;
+  border-color: #1F2937 !important;
+}}
 </style>
 """,
     unsafe_allow_html=True,
