@@ -1,0 +1,81 @@
+<svg width="260" height="430" viewBox="0 0 260 430" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="10" />
+    </filter>
+    <linearGradient id="lineGlow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#eaffff" stop-opacity="0.98" />
+      <stop offset="45%" stop-color="#91ecff" stop-opacity="0.92" />
+      <stop offset="100%" stop-color="#22bfff" stop-opacity="0.78" />
+    </linearGradient>
+    <linearGradient id="innerGlow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#dfffff" stop-opacity="0.7" />
+      <stop offset="100%" stop-color="#2ad5ff" stop-opacity="0.34" />
+    </linearGradient>
+    <radialGradient id="beam" cx="50%" cy="100%" r="60%">
+      <stop offset="0%" stop-color="#48dfff" stop-opacity="0.42"/>
+      <stop offset="100%" stop-color="#48dfff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <ellipse cx="130" cy="384" rx="68" ry="16" fill="url(#beam)" filter="url(#softGlow)"/>
+  <ellipse cx="130" cy="384" rx="52" ry="11" fill="none" stroke="#4ee6ff" stroke-opacity="0.34" stroke-width="1.6"/>
+  <ellipse cx="130" cy="384" rx="34" ry="7" fill="none" stroke="#9cf7ff" stroke-opacity="0.28" stroke-width="1"/>
+  <path d="M130 220 L130 395" stroke="url(#beam)" stroke-width="54" stroke-linecap="round" filter="url(#softGlow)"/>
+
+  <g opacity="0.22">
+    <path d="M44 90 H216" stroke="#55dfff" stroke-width="1"/>
+    <path d="M44 132 H216" stroke="#55dfff" stroke-width="1"/>
+    <path d="M44 174 H216" stroke="#55dfff" stroke-width="1"/>
+    <path d="M44 216 H216" stroke="#55dfff" stroke-width="1"/>
+    <path d="M44 258 H216" stroke="#55dfff" stroke-width="1"/>
+    <path d="M44 300 H216" stroke="#55dfff" stroke-width="1"/>
+    <path d="M44 342 H216" stroke="#55dfff" stroke-width="1"/>
+  </g>
+
+  <g filter="url(#glow)">
+    <ellipse cx="130" cy="56" rx="18" ry="22" fill="none" stroke="url(#lineGlow)" stroke-width="2.2"/>
+    <path d="M124 77 C125 83 127 86 130 87 C133 86 135 83 136 77" fill="none" stroke="url(#innerGlow)" stroke-width="2"/>
+
+    <path d="M101 95 C91 102 84 113 81 128 C78 145 79 164 84 184 C88 200 95 216 104 230" fill="none" stroke="url(#lineGlow)" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M159 95 C169 102 176 113 179 128 C182 145 181 164 176 184 C172 200 165 216 156 230" fill="none" stroke="url(#lineGlow)" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M114 102 C108 120 107 140 109 161 C111 181 116 202 123 220" fill="none" stroke="url(#innerGlow)" stroke-width="2.1" stroke-linecap="round"/>
+    <path d="M146 102 C152 120 153 140 151 161 C149 181 144 202 137 220" fill="none" stroke="url(#innerGlow)" stroke-width="2.1" stroke-linecap="round"/>
+
+    <path d="M109 88 C98 93 88 102 82 116 C76 130 75 148 77 168 C80 193 87 215 97 233 C104 245 113 252 123 255" fill="none" stroke="url(#lineGlow)" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M151 88 C162 93 172 102 178 116 C184 130 185 148 183 168 C180 193 173 215 163 233 C156 245 147 252 137 255" fill="none" stroke="url(#lineGlow)" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M123 255 C120 273 119 293 119 314 C118 342 115 368 111 396" fill="none" stroke="url(#lineGlow)" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M137 255 C140 273 141 293 141 314 C142 342 145 368 149 396" fill="none" stroke="url(#lineGlow)" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M111 256 C105 269 101 286 100 306 C99 329 102 349 108 368 C112 380 117 389 123 396" fill="none" stroke="url(#lineGlow)" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M149 256 C155 269 159 286 160 306 C161 329 158 349 152 368 C148 380 143 389 137 396" fill="none" stroke="url(#lineGlow)" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M110 397 C117 402 123 404 130 401" fill="none" stroke="url(#lineGlow)" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M150 397 C143 402 137 404 130 401" fill="none" stroke="url(#lineGlow)" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M108 230 C109 242 115 250 123 255" fill="none" stroke="url(#innerGlow)" stroke-width="1.8"/>
+    <path d="M152 230 C151 242 145 250 137 255" fill="none" stroke="url(#innerGlow)" stroke-width="1.8"/>
+
+    <path d="M111 117 C117 111 123 109 130 109 C137 109 143 111 149 117" fill="none" stroke="url(#innerGlow)" stroke-width="1.8"/>
+    <path d="M113 123 C118 136 124 145 130 149 C136 145 142 136 147 123" fill="none" stroke="url(#innerGlow)" stroke-width="1.6"/>
+    <path d="M118 160 C121 156 125 154 130 154 C135 154 139 156 142 160" fill="none" stroke="url(#innerGlow)" stroke-width="1.8"/>
+    <path d="M118 178 H142" fill="none" stroke="url(#innerGlow)" stroke-width="1.5"/>
+    <path d="M120 196 H140" fill="none" stroke="url(#innerGlow)" stroke-width="1.3"/>
+    <path d="M122 212 H138" fill="none" stroke="url(#innerGlow)" stroke-width="1.2"/>
+    <path d="M113 223 C118 231 123 237 130 241 C137 237 142 231 147 223" fill="none" stroke="url(#innerGlow)" stroke-width="1.8"/>
+    <path d="M102 109 C106 119 110 126 114 130" fill="none" stroke="url(#innerGlow)" stroke-width="1.3"/>
+    <path d="M158 109 C154 119 150 126 146 130" fill="none" stroke="url(#innerGlow)" stroke-width="1.3"/>
+    <path d="M91 134 C96 153 98 173 97 193" fill="none" stroke="url(#innerGlow)" stroke-width="1.2"/>
+    <path d="M169 134 C164 153 162 173 163 193" fill="none" stroke="url(#innerGlow)" stroke-width="1.2"/>
+    <path d="M109 286 C113 305 115 326 114 347" fill="none" stroke="url(#innerGlow)" stroke-width="1.2"/>
+    <path d="M151 286 C147 305 145 326 146 347" fill="none" stroke="url(#innerGlow)" stroke-width="1.2"/>
+    <path d="M114 348 C118 360 120 372 119 385" fill="none" stroke="url(#innerGlow)" stroke-width="1.1"/>
+    <path d="M146 348 C142 360 140 372 141 385" fill="none" stroke="url(#innerGlow)" stroke-width="1.1"/>
+    <path d="M124 45 C126 43 128 42 130 42 C132 42 134 43 136 45" fill="none" stroke="url(#innerGlow)" stroke-width="1.1"/>
+    <path d="M123 56 C126 58 128 59 130 59 C132 59 134 58 137 56" fill="none" stroke="url(#innerGlow)" stroke-width="1.1"/>
+  </g>
+</svg>
