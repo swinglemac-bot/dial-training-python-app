@@ -46,3 +46,16 @@ streamlit run ui.py
 - The backend route names are preserved so existing client integrations can be retargeted.
 - Email delivery is currently `manual` (reset/verification links are returned in API responses when enabled).
 - Garmin is scaffolded in mock mode, consistent with the existing project behavior.
+
+## Streamlit Cloud settings
+
+Use these in Streamlit Cloud `Secrets` if you want backend integration and login protection:
+
+```toml
+BACKEND_URL = "https://your-backend-domain"
+APP_USERNAME = "admin"
+APP_PASSWORD = "change-me"
+```
+
+- `BACKEND_URL` enables live coach replies via `/api/coach/respond`.
+- If `APP_USERNAME` and `APP_PASSWORD` are both set, the app requires sign-in.
