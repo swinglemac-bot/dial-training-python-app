@@ -473,6 +473,29 @@ def infer_pattern(exercise: str) -> str:
     return "Accessory"
 
 
+def normalize_search_text(value: str) -> str:
+    cleaned = "".join(ch if ch.isalnum() else " " for ch in str(value).lower())
+    return " ".join(cleaned.split())
+
+
+def matches_workout_search(template: dict, query: str) -> bool:
+    normalized_query = normalize_search_text(query)
+    if not normalized_query:
+        return True
+
+    haystack = " ".join(
+        [
+            str(template.get("title", "")),
+            str(template.get("category", "")),
+            str(template.get("tier", "")),
+            " ".join(template.get("exercises", [])),
+        ]
+    )
+    normalized_haystack = normalize_search_text(haystack)
+    terms = normalized_query.split()
+    return all(term in normalized_haystack for term in terms)
+
+
 def render_welcome() -> None:
     backend_url = get_setting("BACKEND_URL", "").strip()
     if backend_url:
@@ -522,22 +545,17 @@ def render_workout() -> None:
     st.markdown('<div class="dial-shell">', unsafe_allow_html=True)
     st.markdown('<p class="dial-kicker">Programmed Workouts</p>', unsafe_allow_html=True)
     preview_count = 6
-    tier = st.selectbox("Tier", ["All", "Foundation", "Build", "Peak"], index=1)
+    tier = st.selectbox("Tier", ["All", "Foundation", "Build", "Peak"], index=0)
     search = st.text_input("Search workouts, categories, or exercises...")
     query = search.strip().lower()
+    search_all_tiers = st.toggle("Search all tiers", value=True, key="search_all_tiers")
 
-    templates = workout_catalog(tier)
-    filtered = []
-    for template in templates:
-        matched = (
-            not query
-            or query in template["title"].lower()
-            or query in template["category"].lower()
-            or query in template["tier"].lower()
-            or any(query in ex.lower() for ex in template["exercises"])
-        )
-        if matched:
-            filtered.append(template)
+    catalog_tier = "All" if query and search_all_tiers else tier
+    templates = workout_catalog(catalog_tier)
+    filtered = [template for template in templates if matches_workout_search(template, query)]
+
+    if query and search_all_tiers and tier != "All":
+        st.caption("Search is currently running across all tiers.")
 
     show_all = st.toggle(f"Show all workouts ({len(filtered)})", value=bool(query), key="show_all_workouts")
     visible = filtered if query or show_all else filtered[:preview_count]
