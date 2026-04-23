@@ -174,6 +174,31 @@ def init_state() -> None:
         st.session_state["coach_history"] = []
     if "active_workout" not in st.session_state:
         st.session_state["active_workout"] = None
+    if "admin_settings" not in st.session_state:
+        st.session_state["admin_settings"] = {
+            "allowRegistration": True,
+            "announcementEnabled": False,
+            "announcementMessage": "Welcome to Dialed.",
+            "maintenanceMode": False,
+            "maintenanceMessage": "",
+        }
+    if "members" not in st.session_state:
+        st.session_state["members"] = [
+            {
+                "name": "Alex Ranger",
+                "email": "alex@dialed.app",
+                "role": "member",
+                "plan": "Performance",
+                "status": "active",
+            },
+            {
+                "name": "Sam Coach",
+                "email": "sam@dialed.app",
+                "role": "admin",
+                "plan": "Team",
+                "status": "active",
+            },
+        ]
 
 
 def is_authenticated() -> bool:
@@ -527,13 +552,85 @@ def render_coach() -> None:
 def render_admin() -> None:
     st.markdown('<div class="dial-shell">', unsafe_allow_html=True)
     st.markdown('<p class="dial-kicker">Admin</p>', unsafe_allow_html=True)
-    allow_registration = st.toggle("Allow registration", value=True)
-    announcement = st.text_input("Announcement", "Welcome to Dialed")
+    settings = st.session_state["admin_settings"]
+    members = st.session_state["members"]
+
+    st.subheader("App Controls")
+    c1, c2 = st.columns(2)
+    with c1:
+        settings["allowRegistration"] = st.toggle(
+            "Allow registration", value=bool(settings["allowRegistration"])
+        )
+        settings["announcementEnabled"] = st.toggle(
+            "Announcement enabled", value=bool(settings["announcementEnabled"])
+        )
+        settings["maintenanceMode"] = st.toggle(
+            "Maintenance mode", value=bool(settings["maintenanceMode"])
+        )
+    with c2:
+        settings["announcementMessage"] = st.text_input(
+            "Announcement message", value=str(settings["announcementMessage"])
+        )
+        settings["maintenanceMessage"] = st.text_input(
+            "Maintenance message", value=str(settings["maintenanceMessage"])
+        )
+
+    if st.button("Save Admin Settings"):
+        st.session_state["admin_settings"] = settings
+        st.success("Admin settings saved.")
+
+    st.divider()
+    st.subheader("Member Access")
+    m_col1, m_col2 = st.columns(2)
+    with m_col1:
+        new_email = st.text_input("Member email")
+        new_name = st.text_input("Member name")
+    with m_col2:
+        new_role = st.selectbox("Role", ["member", "admin"], index=0)
+        new_plan = st.selectbox("Plan", ["Foundation", "Performance", "Team"], index=1)
+
+    if st.button("Add Member") and new_email.strip():
+        members.append(
+            {
+                "name": new_name.strip() or "New Member",
+                "email": new_email.strip().lower(),
+                "role": new_role,
+                "plan": new_plan,
+                "status": "active",
+            }
+        )
+        st.session_state["members"] = members
+        st.success(f"Added {new_email.strip().lower()}.")
+
+    if members:
+        selected_email = st.selectbox(
+            "Select member", [member["email"] for member in members], index=0
+        )
+        selected_member = next(member for member in members if member["email"] == selected_email)
+        role_update = st.selectbox(
+            "Update role", ["member", "admin"], index=0 if selected_member["role"] == "member" else 1
+        )
+        status_update = st.selectbox(
+            "Update status", ["active", "paused", "locked"], index=["active", "paused", "locked"].index(selected_member["status"])
+        )
+        if st.button("Update Member"):
+            selected_member["role"] = role_update
+            selected_member["status"] = status_update
+            st.session_state["members"] = members
+            st.success(f"Updated {selected_email}.")
+
+    st.divider()
+    st.subheader("Admin Snapshot")
     st.code(
         json.dumps(
             {
-                "allowRegistration": allow_registration,
-                "announcement": announcement,
+                "settings": st.session_state["admin_settings"],
+                "memberCount": len(st.session_state["members"]),
+                "admins": [
+                    member["email"]
+                    for member in st.session_state["members"]
+                    if member["role"] == "admin"
+                ],
             },
             indent=2,
         ),
@@ -566,7 +663,7 @@ def render_account() -> None:
 def render_placeholder(screen: str) -> None:
     st.markdown('<div class="dial-shell">', unsafe_allow_html=True)
     st.markdown(f'<p class="dial-kicker">{screen}</p>', unsafe_allow_html=True)
-    st.info("This screen is scaffolded with production styling and ready for deeper parity wiring.")
+    st.info("This screen is running in the Python build and ready for deeper parity wiring.")
     st.markdown("</div>", unsafe_allow_html=True)
 
 
