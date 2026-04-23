@@ -269,6 +269,20 @@ def save_workout_result(workout_title: str, tier: str, notes: str) -> None:
     st.session_state["workout_history"] = [record] + st.session_state["workout_history"]
 
 
+def save_workout_result_with_exercises(workout: dict, notes: str) -> None:
+    record = {
+        "id": datetime.utcnow().strftime("%Y%m%d%H%M%S%f"),
+        "date": datetime.utcnow().isoformat(),
+        "title": workout["title"],
+        "tier": workout["tier"],
+        "category": workout.get("category", "General"),
+        "exercises": workout.get("exercises", []),
+        "completedCount": len(workout.get("exercises", [])),
+        "notes": notes,
+    }
+    st.session_state["workout_history"] = [record] + st.session_state["workout_history"]
+
+
 def workout_catalog(selected_tier: str) -> list[dict]:
     pool = [w for w in WORKOUT_TEMPLATES if selected_tier == "All" or w["tier"] == selected_tier]
     profile = st.session_state.get("foundation_profile", {})
@@ -278,6 +292,31 @@ def workout_catalog(selected_tier: str) -> list[dict]:
     elif goal == "Fat Loss":
         pool = sorted(pool, key=lambda x: 0 if x["category"] in {"Full", "Athletic"} else 1)
     return pool
+
+
+def workout_performance_grade(total_logged: int, completed_count: int) -> str:
+    if total_logged == 0 or completed_count == 0:
+        return "Reset"
+    if completed_count >= total_logged:
+        return "Locked In"
+    if completed_count / total_logged >= 0.65:
+        return "Productive"
+    return "Partial"
+
+
+def infer_movement_pattern(exercise: str) -> str:
+    text = exercise.lower()
+    if "squat" in text:
+        return "Squat"
+    if "deadlift" in text or "rdl" in text:
+        return "Hinge"
+    if any(token in text for token in ["press", "bench", "dip"]):
+        return "Push"
+    if any(token in text for token in ["row", "pull", "pulldown"]):
+        return "Pull"
+    if any(token in text for token in ["sled", "carry", "sprint", "bike", "erg"]):
+        return "Conditioning"
+    return "Accessory"
 
 
 def render_welcome() -> None:
@@ -319,15 +358,38 @@ def render_foundation_setup() -> None:
 def render_workout() -> None:
     st.markdown('<div class="dial-shell">', unsafe_allow_html=True)
     st.markdown('<p class="dial-kicker">Programmed Workouts</p>', unsafe_allow_html=True)
+    preview_count = 6
     tier = st.selectbox("Tier", ["All", "Foundation", "Build", "Peak"], index=1)
+    search = st.text_input("Search workouts, categories, or exercises...")
+    query = search.strip().lower()
     templates = workout_catalog(tier)
+    filtered = []
+    for template in templates:
+        matches = (
+            not query
+            or query in template["title"].lower()
+            or query in template["category"].lower()
+            or query in template["tier"].lower()
+            or any(query in ex.lower() for ex in template["exercises"])
+        )
+        if matches:
+            filtered.append(template)
 
-    if not templates:
+    show_all = st.toggle(
+        f"Show all workouts ({len(filtered)})", value=bool(query), key="show_all_workouts"
+    )
+    visible = filtered if query or show_all else filtered[:preview_count]
+
+    if not filtered:
         st.info("No workouts found for this filter.")
         st.markdown("</div>", unsafe_allow_html=True)
         return
+    if not query and not show_all and len(filtered) > len(visible):
+        st.caption(
+            f"Showing top {preview_count}. Search or toggle all workouts to browse the full catalog."
+        )
 
-    for template in templates:
+    for template in visible:
         with st.expander(f"{template['title']}  |  {template['tier']}  |  {template['category']}"):
             for ex in template["exercises"]:
                 st.write(f"- {ex}")
@@ -343,7 +405,7 @@ def render_workout() -> None:
         notes = st.text_area("Session notes", key="session_notes")
         complete = st.button("Complete Workout")
         if complete:
-            save_workout_result(active["title"], active["tier"], notes)
+            save_workout_result_with_exercises(active, notes)
             st.session_state["active_workout"] = None
             st.success("Workout logged to Results.")
     st.markdown("</div>", unsafe_allow_html=True)
@@ -356,8 +418,38 @@ def render_results() -> None:
     if not history:
         st.info("No workouts logged yet.")
     else:
+        selected = history[0]
+        total_logged = len(selected.get("exercises", []))
+        completed_count = int(selected.get("completedCount", total_logged))
+        grade = workout_performance_grade(total_logged, completed_count)
+        top_exercise = selected.get("exercises", ["-"])[0] if selected.get("exercises") else "-"
+        movement_split: dict[str, int] = {}
+        for ex in selected.get("exercises", []):
+            pattern = infer_movement_pattern(ex)
+            movement_split[pattern] = movement_split.get(pattern, 0) + 1
+        recent = history[:6]
+        trend_values = [len(item.get("exercises", [])) for item in recent]
+
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Performance", grade)
+        m2.metric("Exercises", str(total_logged))
+        m3.metric("Top Movement", top_exercise.split(" ")[0] if top_exercise != "-" else "-")
+        m4.metric("Recent Sessions", str(len(history)))
+
+        c1, c2 = st.columns(2)
+        c1.write("Movement split")
+        c1.code(json.dumps(movement_split or {"None": 0}, indent=2), language="json")
+        c2.write("Recent trend (exercise count)")
+        c2.line_chart(list(reversed(trend_values)))
+
+        st.divider()
         for record in history[:25]:
             with st.expander(f"{record['title']} | {record['tier']} | {record['date'][:10]}"):
+                exercises = record.get("exercises", [])
+                if exercises:
+                    st.write("Exercises")
+                    for ex in exercises:
+                        st.write(f"- {ex}")
                 st.write(record.get("notes") or "No notes")
     st.markdown("</div>", unsafe_allow_html=True)
 
