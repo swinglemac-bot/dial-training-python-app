@@ -240,6 +240,20 @@ def init_state() -> None:
         st.session_state["members"] = []
     if "backend_auth" not in st.session_state:
         st.session_state["backend_auth"] = {"token": "", "member": None}
+    if "recovery_logs" not in st.session_state:
+        st.session_state["recovery_logs"] = []
+    if "pt_logs" not in st.session_state:
+        st.session_state["pt_logs"] = []
+    if "military_logs" not in st.session_state:
+        st.session_state["military_logs"] = []
+    if "local_teams" not in st.session_state:
+        st.session_state["local_teams"] = []
+    if "local_team_rosters" not in st.session_state:
+        st.session_state["local_team_rosters"] = {}
+    if "local_team_templates" not in st.session_state:
+        st.session_state["local_team_templates"] = {}
+    if "local_team_assignments" not in st.session_state:
+        st.session_state["local_team_assignments"] = {}
 
 
 def app_gate_authenticated() -> bool:
@@ -518,6 +532,10 @@ def render_welcome() -> None:
     c1.metric("Workouts Logged", len(st.session_state["workout_history"]))
     c2.metric("Coach Messages", len(st.session_state["coach_history"]))
     c3.metric("Program Tier", "Foundation")
+    c4, c5, c6 = st.columns(3)
+    c4.metric("Recovery Logs", len(st.session_state["recovery_logs"]))
+    c5.metric("PT Logs", len(st.session_state["pt_logs"]))
+    c6.metric("Military Logs", len(st.session_state["military_logs"]))
     st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -641,12 +659,45 @@ def render_recovery() -> None:
     st.markdown('<div class="dial-shell">', unsafe_allow_html=True)
     st.markdown('<p class="dial-kicker">Recovery</p>', unsafe_allow_html=True)
     readiness = st.slider("How recovered do you feel?", 1, 10, 6)
+    soreness = st.slider("Soreness", 1, 10, 5)
+    sleep_hours = st.slider("Sleep last night (hours)", 0.0, 12.0, 7.0, 0.5)
     for step in RECOVERY_PROTOCOLS:
         st.write(f"- {step}")
     if readiness <= 4:
         st.warning("Keep intensity low today.")
     elif readiness >= 8:
         st.success("Green light for a harder session.")
+
+    notes = st.text_area("Recovery notes", key="recovery_notes")
+    if st.button("Log Recovery Check", key="recovery_log_btn"):
+        log = {
+            "id": datetime.utcnow().strftime("%Y%m%d%H%M%S%f"),
+            "date": datetime.utcnow().isoformat(),
+            "readiness": readiness,
+            "soreness": soreness,
+            "sleepHours": sleep_hours,
+            "notes": notes.strip(),
+        }
+        st.session_state["recovery_logs"] = [log] + st.session_state["recovery_logs"]
+        st.success("Recovery check logged.")
+
+    if st.session_state["recovery_logs"]:
+        st.divider()
+        st.caption("Recent recovery logs")
+        st.dataframe(
+            [
+                {
+                    "date": item["date"][:10],
+                    "readiness": item["readiness"],
+                    "soreness": item["soreness"],
+                    "sleepHours": item["sleepHours"],
+                    "notes": item["notes"] or "-",
+                }
+                for item in st.session_state["recovery_logs"][:10]
+            ],
+            hide_index=True,
+            use_container_width=True,
+        )
     st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -654,8 +705,38 @@ def render_pt() -> None:
     st.markdown('<div class="dial-shell">', unsafe_allow_html=True)
     st.markdown('<p class="dial-kicker">PT Support</p>', unsafe_allow_html=True)
     condition = st.selectbox("Condition", list(PT_PROTOCOLS.keys()))
+    pain_level = st.slider("Current pain level", 0, 10, 3)
     for step in PT_PROTOCOLS[condition]:
         st.write(f"- {step}")
+    pt_notes = st.text_area("PT notes", key="pt_notes")
+    if st.button("Log PT Session", key="pt_log_btn"):
+        log = {
+            "id": datetime.utcnow().strftime("%Y%m%d%H%M%S%f"),
+            "date": datetime.utcnow().isoformat(),
+            "condition": condition,
+            "painLevel": pain_level,
+            "protocol": PT_PROTOCOLS[condition],
+            "notes": pt_notes.strip(),
+        }
+        st.session_state["pt_logs"] = [log] + st.session_state["pt_logs"]
+        st.success("PT session logged.")
+
+    if st.session_state["pt_logs"]:
+        st.divider()
+        st.caption("Recent PT logs")
+        st.dataframe(
+            [
+                {
+                    "date": item["date"][:10],
+                    "condition": item["condition"],
+                    "painLevel": item["painLevel"],
+                    "notes": item["notes"] or "-",
+                }
+                for item in st.session_state["pt_logs"][:10]
+            ],
+            hide_index=True,
+            use_container_width=True,
+        )
     st.caption("Supportive training guidance, not diagnosis.")
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -665,9 +746,40 @@ def render_military_prep() -> None:
     st.markdown('<p class="dial-kicker">Military Prep</p>', unsafe_allow_html=True)
     school = st.selectbox("Target School", list(MILITARY_ROUTES.keys()))
     week = st.slider("Current week", 1, 16, 1)
+    compliance = st.slider("Weekly compliance (%)", 0, 100, 70, 5)
     st.write(f"Week {week} priorities:")
     for step in MILITARY_ROUTES[school]:
         st.write(f"- {step}")
+    military_notes = st.text_area("Military prep notes", key="military_notes")
+    if st.button("Log Military Prep Week", key="military_log_btn"):
+        log = {
+            "id": datetime.utcnow().strftime("%Y%m%d%H%M%S%f"),
+            "date": datetime.utcnow().isoformat(),
+            "school": school,
+            "week": week,
+            "compliance": compliance,
+            "notes": military_notes.strip(),
+        }
+        st.session_state["military_logs"] = [log] + st.session_state["military_logs"]
+        st.success("Military prep week logged.")
+
+    if st.session_state["military_logs"]:
+        st.divider()
+        st.caption("Recent military prep logs")
+        st.dataframe(
+            [
+                {
+                    "date": item["date"][:10],
+                    "school": item["school"],
+                    "week": item["week"],
+                    "compliance": item["compliance"],
+                    "notes": item["notes"] or "-",
+                }
+                for item in st.session_state["military_logs"][:10]
+            ],
+            hide_index=True,
+            use_container_width=True,
+        )
     st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -959,11 +1071,221 @@ def render_team_admin() -> None:
     backend_configured = bool(get_setting("BACKEND_URL", "").strip())
 
     if not backend_configured:
-        st.info("Local mode only. Configure BACKEND_URL for live teams.")
-        team_name = st.text_input("Team name", "Dialed Tactical", key="team_name_local")
-        athlete_email = st.text_input("Add athlete by email", key="team_add_email_local")
-        if st.button("Add Athlete", key="team_add_local") and athlete_email:
-            st.success(f"Added {athlete_email} to {team_name}.")
+        st.info("Local team mode: data will persist for this app session.")
+        local_teams = st.session_state["local_teams"]
+        local_rosters = st.session_state["local_team_rosters"]
+        local_templates = st.session_state["local_team_templates"]
+        local_assignments = st.session_state["local_team_assignments"]
+
+        st.subheader("Create Team")
+        lc1, lc2 = st.columns(2)
+        with lc1:
+            local_team_name = st.text_input("Team name", key="team_name_local")
+        with lc2:
+            local_org = st.text_input("Organization", key="team_org_local")
+        if st.button("Create Local Team", key="team_create_local_btn") and local_team_name.strip():
+            new_team_id = datetime.utcnow().strftime("team-%Y%m%d%H%M%S%f")
+            new_team = {
+                "id": new_team_id,
+                "name": local_team_name.strip(),
+                "organization": local_org.strip(),
+                "myRole": "team_admin",
+            }
+            local_teams.insert(0, new_team)
+            local_rosters[new_team_id] = []
+            local_templates[new_team_id] = []
+            local_assignments[new_team_id] = []
+            st.session_state["local_teams"] = local_teams
+            st.success(f"Created {local_team_name.strip()}.")
+            st.rerun()
+
+        if not local_teams:
+            st.info("Create a local team to start managing members and templates.")
+            st.markdown("</div>", unsafe_allow_html=True)
+            return
+
+        local_labels = [f"{t.get('name', 'Team')} ({t.get('id', '')[:8]})" for t in local_teams]
+        selected_local_label = st.selectbox("Select team", local_labels, key="team_select_local")
+        selected_local_team = local_teams[local_labels.index(selected_local_label)]
+        local_team_id = str(selected_local_team["id"])
+
+        roster = local_rosters.get(local_team_id, [])
+        templates = local_templates.get(local_team_id, [])
+        assignments = local_assignments.get(local_team_id, [])
+
+        d1, d2, d3 = st.columns(3)
+        d1.metric("Roster", str(len(roster)))
+        d2.metric("Templates", str(len(templates)))
+        d3.metric("Assignments", str(len(assignments)))
+
+        st.subheader("Add Team Member")
+        la1, la2, la3 = st.columns(3)
+        with la1:
+            local_member_name = st.text_input("Member name", key="team_local_member_name")
+        with la2:
+            local_member_email = st.text_input("Member email", key="team_local_member_email")
+        with la3:
+            local_member_role = st.selectbox(
+                "Team role",
+                ["athlete", "coach", "team_admin"],
+                key="team_local_member_role",
+            )
+        if st.button("Add to Team", key="team_add_local") and local_member_email.strip():
+            roster.append(
+                {
+                    "id": datetime.utcnow().strftime("member-%Y%m%d%H%M%S%f"),
+                    "name": local_member_name.strip() or local_member_email.strip().split("@")[0],
+                    "email": local_member_email.strip().lower(),
+                    "teamRole": local_member_role,
+                    "globalRole": "member",
+                    "subscription": {"plan": "Performance", "status": "active"},
+                }
+            )
+            local_rosters[local_team_id] = roster
+            st.session_state["local_team_rosters"] = local_rosters
+            st.success(f"Added {local_member_email.strip().lower()} to team.")
+            st.rerun()
+
+        if roster:
+            selected_local_member_label = st.selectbox(
+                "Select roster member",
+                [f"{m.get('name', '')} ({m.get('email', '')})" for m in roster],
+                key="team_local_member_select",
+            )
+            selected_local_member = roster[
+                [f"{m.get('name', '')} ({m.get('email', '')})" for m in roster].index(selected_local_member_label)
+            ]
+            update_local_role = st.selectbox(
+                "Update team role",
+                ["athlete", "coach", "team_admin"],
+                index=["athlete", "coach", "team_admin"].index(selected_local_member.get("teamRole", "athlete"))
+                if selected_local_member.get("teamRole", "athlete") in {"athlete", "coach", "team_admin"}
+                else 0,
+                key="team_local_role_update",
+            )
+            if st.button("Update Member Role", key="team_update_local_role_btn"):
+                selected_local_member["teamRole"] = update_local_role
+                local_rosters[local_team_id] = roster
+                st.session_state["local_team_rosters"] = local_rosters
+                st.success("Team role updated.")
+                st.rerun()
+
+        st.subheader("Create Template")
+        lt1, lt2 = st.columns(2)
+        with lt1:
+            local_template_title = st.text_input("Template title", key="team_local_template_title")
+            local_template_tier = st.selectbox("Tier", ["Foundation", "Build", "Peak"], key="team_local_template_tier")
+        with lt2:
+            local_template_category = st.text_input("Category", "General", key="team_local_template_category")
+            local_exercises_raw = st.text_area(
+                "Exercises (one per line)",
+                "Back Squat 5x5\nBench Press 5x5\nRow 4x8",
+                key="team_local_template_exercises",
+            )
+        if st.button("Create Template", key="team_create_template_local_btn") and local_template_title.strip():
+            exercises = [line.strip() for line in local_exercises_raw.splitlines() if line.strip()]
+            templates.append(
+                {
+                    "id": datetime.utcnow().strftime("template-%Y%m%d%H%M%S%f"),
+                    "title": local_template_title.strip(),
+                    "tier": local_template_tier,
+                    "category": local_template_category.strip() or "General",
+                    "exercises": exercises,
+                }
+            )
+            local_templates[local_team_id] = templates
+            st.session_state["local_team_templates"] = local_templates
+            st.success("Template created.")
+            st.rerun()
+
+        st.subheader("Assign Template")
+        if templates and roster:
+            local_template_labels = [f"{t.get('title', '')} ({t.get('tier', '')})" for t in templates]
+            local_selected_template_label = st.selectbox(
+                "Template",
+                local_template_labels,
+                key="team_local_template_pick",
+            )
+            local_selected_template = templates[local_template_labels.index(local_selected_template_label)]
+            local_member_options = [f"{m.get('name', '')} ({m.get('email', '')})" for m in roster]
+            selected_members = st.multiselect(
+                "Assign to members",
+                local_member_options,
+                key="team_local_assign_members",
+            )
+            if st.button("Create Assignment", key="team_local_create_assignment_btn") and selected_members:
+                member_map = {f"{m.get('name', '')} ({m.get('email', '')})": m for m in roster}
+                for label in selected_members:
+                    m = member_map[label]
+                    assignments.append(
+                        {
+                            "id": datetime.utcnow().strftime("assign-%Y%m%d%H%M%S%f"),
+                            "templateTitle": local_selected_template.get("title", ""),
+                            "memberName": m.get("name", ""),
+                            "status": "assigned",
+                            "assignedAt": datetime.utcnow().isoformat(),
+                        }
+                    )
+                local_assignments[local_team_id] = assignments
+                st.session_state["local_team_assignments"] = local_assignments
+                st.success("Assignments created.")
+                st.rerun()
+        else:
+            st.caption("Create at least one roster member and one template to assign workouts.")
+
+        st.divider()
+        st.subheader("Team Roster")
+        if roster:
+            st.dataframe(
+                [
+                    {
+                        "name": m.get("name", ""),
+                        "email": m.get("email", ""),
+                        "teamRole": m.get("teamRole", ""),
+                        "globalRole": m.get("globalRole", ""),
+                        "plan": m.get("subscription", {}).get("plan", ""),
+                        "status": m.get("subscription", {}).get("status", ""),
+                    }
+                    for m in roster
+                ],
+                hide_index=True,
+                use_container_width=True,
+            )
+        else:
+            st.info("No members in this team yet.")
+
+        if templates:
+            st.subheader("Templates")
+            st.dataframe(
+                [
+                    {
+                        "title": t.get("title", ""),
+                        "tier": t.get("tier", ""),
+                        "category": t.get("category", ""),
+                        "exerciseCount": len(t.get("exercises", []) if isinstance(t.get("exercises"), list) else []),
+                    }
+                    for t in templates
+                ],
+                hide_index=True,
+                use_container_width=True,
+            )
+
+        if assignments:
+            st.subheader("Assignments")
+            st.dataframe(
+                [
+                    {
+                        "template": a.get("templateTitle", ""),
+                        "member": a.get("memberName", ""),
+                        "status": a.get("status", ""),
+                        "assignedAt": a.get("assignedAt", ""),
+                    }
+                    for a in assignments
+                ],
+                hide_index=True,
+                use_container_width=True,
+            )
+
         st.markdown("</div>", unsafe_allow_html=True)
         return
 
@@ -1064,6 +1386,92 @@ def render_team_admin() -> None:
         else:
             st.success(f"Added {add_email.strip().lower()} to team.")
             st.rerun()
+
+    if roster:
+        selected_roster_label = st.selectbox(
+            "Select roster member",
+            [f"{m.get('name', '')} ({m.get('email', '')})" for m in roster],
+            key="team_live_member_select",
+        )
+        selected_roster_member = roster[
+            [f"{m.get('name', '')} ({m.get('email', '')})" for m in roster].index(selected_roster_label)
+        ]
+        update_role = st.selectbox(
+            "Update team role",
+            ["athlete", "coach", "team_admin"],
+            index=["athlete", "coach", "team_admin"].index(selected_roster_member.get("teamRole", "athlete"))
+            if selected_roster_member.get("teamRole", "athlete") in {"athlete", "coach", "team_admin"}
+            else 0,
+            key="team_live_role_update",
+        )
+        if st.button("Update Member Role", key="team_update_live_role_btn"):
+            _, role_error = backend_request(
+                f"/api/team/{team_id}/members/{selected_roster_member.get('id')}",
+                method="PATCH",
+                payload={"role": update_role},
+                auth_token=token,
+            )
+            if role_error:
+                st.error(f"Could not update role: {role_error}")
+            else:
+                st.success("Team role updated.")
+                st.rerun()
+
+    st.subheader("Create Template")
+    t1, t2 = st.columns(2)
+    with t1:
+        template_title = st.text_input("Template title", key="team_template_title")
+        template_tier = st.selectbox("Tier", ["Foundation", "Build", "Peak"], key="team_template_tier")
+    with t2:
+        template_category = st.text_input("Category", "General", key="team_template_category")
+        template_exercises_raw = st.text_area(
+            "Exercises (one per line)",
+            "Back Squat 5x5\nBench Press 5x5\nRow 4x8",
+            key="team_template_exercises",
+        )
+
+    if st.button("Create Team Template", key="team_create_template_btn") and template_title.strip():
+        exercises = [line.strip() for line in template_exercises_raw.splitlines() if line.strip()]
+        _, template_error = backend_request(
+            f"/api/team/{team_id}/templates",
+            method="POST",
+            payload={
+                "title": template_title.strip(),
+                "tier": template_tier,
+                "category": template_category.strip() or "General",
+                "exercises": exercises,
+            },
+            auth_token=token,
+        )
+        if template_error:
+            st.error(f"Template creation failed: {template_error}")
+        else:
+            st.success("Template created.")
+            st.rerun()
+
+    st.subheader("Assign Template")
+    if templates and roster:
+        template_labels = [f"{t.get('title', '')} ({t.get('tier', '')})" for t in templates]
+        selected_template_label = st.selectbox("Template", template_labels, key="team_assign_template_pick")
+        selected_template = templates[template_labels.index(selected_template_label)]
+        roster_labels = [f"{m.get('name', '')} ({m.get('email', '')})" for m in roster]
+        selected_roster_labels = st.multiselect("Assign to members", roster_labels, key="team_assign_members_pick")
+        if st.button("Create Assignment", key="team_create_assignment_btn") and selected_roster_labels:
+            label_to_member = {f"{m.get('name', '')} ({m.get('email', '')})": m for m in roster}
+            member_ids = [str(label_to_member[label].get("id")) for label in selected_roster_labels]
+            _, assign_error = backend_request(
+                f"/api/team/{team_id}/assignments",
+                method="POST",
+                payload={"templateId": selected_template.get("id"), "memberIds": member_ids},
+                auth_token=token,
+            )
+            if assign_error:
+                st.error(f"Assignment failed: {assign_error}")
+            else:
+                st.success("Assignments created.")
+                st.rerun()
+    else:
+        st.caption("Create at least one roster member and one template to assign workouts.")
 
     st.divider()
     st.subheader("Team Roster")
