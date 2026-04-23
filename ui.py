@@ -648,23 +648,6 @@ def render_admin() -> None:
     else:
         st.info("No members match the current filters.")
 
-    st.divider()
-    st.subheader("Admin Snapshot")
-    st.code(
-        json.dumps(
-            {
-                "settings": st.session_state["admin_settings"],
-                "memberCount": len(st.session_state["members"]),
-                "admins": [
-                    member["email"]
-                    for member in st.session_state["members"]
-                    if member["role"] == "admin"
-                ],
-            },
-            indent=2,
-        ),
-        language="json",
-    )
     st.markdown("</div>", unsafe_allow_html=True)
 
 
