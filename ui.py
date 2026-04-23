@@ -111,6 +111,30 @@ st.markdown(
     radial-gradient(1200px 550px at 0% -20%, rgba(127,86,255,0.22), transparent 60%),
     radial-gradient(900px 450px at 100% 0%, rgba(22,163,74,0.16), transparent 52%),
     {THEME['bg']};
+  color: #E5E7EB !important;
+}}
+[data-testid="stAppViewContainer"] {{
+  color: #E5E7EB !important;
+}}
+[data-testid="stAppViewContainer"] p,
+[data-testid="stAppViewContainer"] span,
+[data-testid="stAppViewContainer"] label,
+[data-testid="stAppViewContainer"] li,
+[data-testid="stAppViewContainer"] h1,
+[data-testid="stAppViewContainer"] h2,
+[data-testid="stAppViewContainer"] h3,
+[data-testid="stAppViewContainer"] h4,
+[data-testid="stAppViewContainer"] h5,
+[data-testid="stAppViewContainer"] h6,
+[data-testid="stMetricLabel"],
+[data-testid="stMetricValue"] {{
+  color: #E5E7EB !important;
+  opacity: 1 !important;
+}}
+[data-testid="stCaptionContainer"] p,
+.stCaption {{
+  color: #98A6BF !important;
+  opacity: 1 !important;
 }}
 [data-testid="stSidebar"] {{
   background: {THEME['sidebar']};
