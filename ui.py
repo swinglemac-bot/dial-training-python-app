@@ -449,6 +449,7 @@ def workout_catalog(selected_tier: str) -> list[dict]:
 
 
 def save_workout_result(workout: dict, notes: str) -> None:
+    completed_count = int(workout.get("completedCount", len(workout.get("exercises", []))))
     record = {
         "id": datetime.utcnow().strftime("%Y%m%d%H%M%S%f"),
         "date": datetime.utcnow().isoformat(),
@@ -456,7 +457,7 @@ def save_workout_result(workout: dict, notes: str) -> None:
         "tier": workout["tier"],
         "category": workout.get("category", "General"),
         "exercises": workout.get("exercises", []),
-        "completedCount": len(workout.get("exercises", [])),
+        "completedCount": completed_count,
         "notes": notes,
     }
     st.session_state["workout_history"] = [record] + st.session_state["workout_history"]
@@ -591,18 +592,63 @@ def render_workout() -> None:
             for ex in template["exercises"]:
                 st.write(f"- {ex}")
             if st.button(f"Start {template['title']}", key=f"start_{template['title']}"):
-                st.session_state["active_workout"] = template
-                st.success(f"Active workout: {template['title']}")
+                st.session_state["active_workout"] = {
+                    "id": datetime.utcnow().strftime("%Y%m%d%H%M%S%f"),
+                    "title": template["title"],
+                    "tier": template["tier"],
+                    "category": template.get("category", "General"),
+                    "exercises": template["exercises"],
+                    "startedAt": datetime.utcnow().isoformat(),
+                }
+                st.success(f"Workout started: {template['title']}")
+                st.rerun()
 
     active = st.session_state.get("active_workout")
     if active:
         st.divider()
         st.write(f"Active workout: **{active['title']}**")
-        notes = st.text_area("Session notes", key="session_notes")
-        if st.button("Complete Workout", key="complete_workout"):
-            save_workout_result(active, notes)
+
+        started_at_raw = str(active.get("startedAt") or "")
+        elapsed_minutes = 0
+        if started_at_raw:
+            try:
+                started_at = datetime.fromisoformat(started_at_raw)
+                elapsed_minutes = max(0, int((datetime.utcnow() - started_at).total_seconds() // 60))
+            except Exception:
+                elapsed_minutes = 0
+
+        exercises = active.get("exercises", [])
+        completed_flags: list[bool] = []
+        for idx, ex in enumerate(exercises):
+            key = f"active_ex_{active['id']}_{idx}"
+            completed_flags.append(st.checkbox(ex, key=key))
+
+        completed_count = sum(1 for flag in completed_flags if flag)
+        progress = (completed_count / len(exercises)) if exercises else 0.0
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Completed", f"{completed_count}/{len(exercises)}")
+        m2.metric("Progress", f"{int(progress * 100)}%")
+        m3.metric("Elapsed", f"{elapsed_minutes} min")
+        st.progress(progress if exercises else 0.0)
+
+        notes = st.text_area("Session notes", key=f"session_notes_{active['id']}")
+        c1, c2 = st.columns(2)
+        if c1.button("Finish Workout", key="complete_workout"):
+            payload = {
+                "title": active["title"],
+                "tier": active["tier"],
+                "category": active.get("category", "General"),
+                "exercises": exercises,
+                "completedCount": completed_count,
+            }
+            save_workout_result(payload, notes)
             st.session_state["active_workout"] = None
             st.success("Workout logged to Results.")
+            st.rerun()
+        if c2.button("Cancel Active Workout", key="cancel_workout"):
+            st.session_state["active_workout"] = None
+            st.warning("Active workout canceled.")
+            st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
 
